@@ -1,0 +1,2 @@
+- <https://fasterthanli.me/articles/peeking-inside-a-rust-enum>
+- [RustChinaConf2020 - High Performance Time Series Database](https://youtu.be/CtON6aG3LtQ)
