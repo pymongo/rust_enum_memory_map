@@ -8,12 +8,13 @@ enum UserIDKind {
 
 struct A {
     enum UserIDKind kind;
+    // padding 4 byte
     uint64_t number;
     char *text;
 };
 
+/* __attribute__((packed)) is same as #[repr(packed)] */
 // `__attribute__((packed))` means no memory padding in strut fields
-// C 语言好像没有 Rust 编译器将字段打乱重排的编译器优化，所以只有 padding 没有 align
 struct __attribute__((packed)) B {
     enum UserIDKind kind;
     uint64_t number;
@@ -29,6 +30,7 @@ int main() {
 
     printf("\nafter add __attribute__((packed))\n\n");
     printf("sizeof(struct B) = %ld\n", sizeof(struct B));
+    // 4 + 8 + 8 = 20
     printf("%ld + %ld + %ld = %ld\n",
         sizeof(enum UserIDKind), sizeof(uint64_t), sizeof(char *),
         sizeof(enum UserIDKind) + sizeof(uint64_t) + sizeof(char *)
