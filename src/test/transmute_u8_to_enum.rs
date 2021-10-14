@@ -8,7 +8,7 @@ fn t1() {
     enum Bool {
         F,
         T,
-    }   
+    }
     // 如果超出范围，则会 transmute 成第一个 variant
     let b: Bool = unsafe { std::mem::transmute(4_u8) };
     dbg!(b);

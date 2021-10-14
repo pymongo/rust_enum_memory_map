@@ -48,7 +48,7 @@ enum UserID {
 }
 ```
 
-String 是胖指针，大小是 usize * 2 所以 enum 大小是 1(tag) + 15(padding) + max(8, 16) = 32
+String/Vec 的大小是 8(ptr)+8(len)+8(cap) 所以 enum 大小是 1(tag) + 7(padding) + 24 = 32
 
 ## 为什么 enum 是和类型
 
@@ -75,3 +75,26 @@ struct ProductType {
 ## discriminated/tagged union
 
 Rust 这种和类型的 enum 在其它语言中也叫 tagged union 或者 discriminated union
+
+## too large on stack
+
+如果有个变量大小超过 200 且分配在栈上，clippy 有警告
+
+clippy_lints/src/utils/conf.rs:
+
+> (too_large_for_stack: u64 = 200)
+
+但如果大小很大的变量仅仅在函数内使用没有在函数间传递倒也不用在意这个 lint
+
+再看看 clippy.toml 的这个配置项:
+
+> (pass_by_value_size_limit: u64 = 256)
+
+很容易想到学 C 语言提过体积特别大的结构体在函数间传递时要 malloc 分配到堆上然后传递指针
+
+clippy 中也有一个类似的设置选项:
+
+> (enum_variant_size_threshold: u64 = 200)
+
+
+
