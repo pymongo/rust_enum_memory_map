@@ -37,7 +37,7 @@ impl SmartAllocStr {
                 data: Default::default(),
             };
             let string = s.to_string();
-            let ptr: *mut String = self_.data[..STRING_SIZE].as_mut_ptr().cast();
+            let ptr = self_.data[..STRING_SIZE].as_mut_ptr().cast::<String>();
             unsafe { ptr.write_unaligned(string) };
             // std::mem::forget(string);
             self_
@@ -46,11 +46,14 @@ impl SmartAllocStr {
                 discriminant: Discriminant::StackAlloc,
                 data: Default::default(),
             };
-            let stack_str = StackAllocStr {
-                len: 0,
+            let mut stack_str = StackAllocStr {
+                len: s.len() as _,
                 data: Default::default(),
             };
-            let ptr: *mut StackAllocStr = self_.data[..STRING_SIZE].as_mut_ptr().cast();
+            stack_str.data[..s.len()].copy_from_slice(s.as_bytes());
+            let ptr = self_.data[..STRING_SIZE]
+                .as_mut_ptr()
+                .cast::<StackAllocStr>();
             unsafe { ptr.write_unaligned(stack_str) };
             self_
             // Self {
@@ -71,7 +74,44 @@ impl Drop for SmartAllocStr {
     }
 }
 
+impl AsRef<str> for SmartAllocStr {
+    fn as_ref(&self) -> &str {
+        match self.discriminant {
+            Discriminant::StackAlloc => {
+                let s = self.data.as_ptr().cast::<StackAllocStr>();
+                unsafe {
+                    let s = &*s;
+                    let slice = std::slice::from_raw_parts(s.data.as_ptr(), usize::from(s.len));
+                    std::str::from_utf8_unchecked(slice)
+                }
+            }
+            Discriminant::HeapAlloc => {
+                let s = self.data.as_ptr().cast::<std::mem::ManuallyDrop<String>>();
+                let tmp = unsafe { s.read_unaligned() };
+                unsafe { &*(tmp.as_ref() as *const str) }
+            }
+        }
+    }
+}
+
+impl std::fmt::Display for SmartAllocStr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s: &str = self.as_ref();
+        std::fmt::Display::fmt(s, f)
+    }
+}
+
+impl std::fmt::Debug for SmartAllocStr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s: &str = self.as_ref();
+        std::fmt::Debug::fmt(s, f)
+    }
+}
+
+// TODO impl to &str for my kind
+
 // cargo b && valgrind --tool=memcheck ./target/debug/smart_alloc_str
 fn main() {
-    let s = SmartAllocStr::new("hello");
+    dbg!(SmartAllocStr::new("hello"));
+    dbg!(SmartAllocStr::new(&"a".repeat(60)));
 }
