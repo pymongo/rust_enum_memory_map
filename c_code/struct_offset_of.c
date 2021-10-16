@@ -18,6 +18,7 @@ struct B {
     uint16_t c;
 };
 
+// objdump --source a.out
 int main() {
     printf("sizeof(A) = %ld\n", sizeof(struct A));
     printf("offsetof(struct A, a) = %zu\n", offsetof(struct A, a));

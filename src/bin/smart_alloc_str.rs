@@ -9,6 +9,7 @@ const PADDING_SIZE: usize = size_of::<usize>() - size_of::<Discriminant>();
 const DATA_SIZE: usize = STRING_SIZE + PADDING_SIZE;
 
 // #[repr(u8)]
+/// 既然 x86_64 寻址的时候指针中末尾 3 bit 永远为 0 (用不上)，可以把 discriminant 存在里面
 #[derive(PartialEq)]
 enum Discriminant {
     StackAlloc,
@@ -22,6 +23,7 @@ struct SmartAllocStr {
     data: [u8; DATA_SIZE],
 }
 
+/// warning: borrow of packed field is unsafe
 #[repr(packed)]
 struct StackAllocStr {
     /// len range 0..=30
@@ -54,6 +56,12 @@ impl SmartAllocStr {
             let ptr = self_.data[..STRING_SIZE]
                 .as_mut_ptr()
                 .cast::<StackAllocStr>();
+            // read/write unaligned 的终极解释:
+            // 普通版 ptr::read/write 会按寄存器大小为最小单位去读内存
+            // 但我 StackAllocStr 大小是 31 没必要读 32 个 byte
+            // unaligned pointer 指的就是 repr(packed) 这种结构体，要用 unaligned 去读
+            // 第二种 unaligned 的用法就是把两个 u8 当成一个 u16 去读，但会警告 clippy::cast_ptr_alignment
+            // 或者从 [u8; 8] 的 [1..5] 读出一个 u32 也是没有按内存对齐去走性能会有所损失
             unsafe { ptr.write_unaligned(stack_str) };
             self_
             // Self {

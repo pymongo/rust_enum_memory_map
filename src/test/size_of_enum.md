@@ -37,6 +37,10 @@ struct UserID {
 
 注意 Rust 的 enum 没法用 repr(packed)
 
+借用 packed 结构体的字段时会抛出警告:
+
+> warning: borrow of packed field is unsafe
+
 所以 struct 大小是: 8 + 1
 
 ### u64 and String
