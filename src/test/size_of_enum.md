@@ -80,6 +80,8 @@ struct ProductType {
 
 Rust 这种和类型的 enum 在其它语言中也叫 tagged union 或者 discriminated union
 
+这也是 std::mem::discriminant API 的命令，能获取 enum 的 discriminant 部分
+
 ## too large on stack
 
 如果有个变量大小超过 200 且分配在栈上，clippy 有警告
